@@ -55,7 +55,7 @@ else:
     # मॉडल सेटअप
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    # वॉइस इनपुट बटन (JS से)
+    # वॉइस इनपुट (JS से, ऑटो सबमिट के साथ)
     if st.button("माइक ऑन (वॉइस से बोलो)"):
         st.components.v1.html("""
         <script>
@@ -63,15 +63,21 @@ else:
         recognition.lang = 'hi-IN';
         recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
-            parent.document.querySelector('input[aria-label="मैसेज लिखो:"]').value = transcript;
+            // इनपुट फील्ड अपडेट
+            const inputField = parent.document.querySelector('input[aria-label="मैसेज लिखो:"]');
+            if (inputField) inputField.value = transcript;
+            // ऑटो सबमिट: भेजो बटन सिमुलेट
+            const submitButton = parent.document.querySelector('button:contains("भेजो")');
+            if (submitButton) submitButton.click();
         };
         recognition.start();
         </script>
-        <p>बोलो: 'हाय' या 'जोक सुनाओ'—माइक परमिशन दो!</p>
+        <p>बोलो: 'हाय' या 'जोक सुनाओ'—माइक परमिशन दो! ऑटो जवाब आएगा।</p>
         """, height=100)
 
     user_input = st.text_input("मैसेज लिखो:", key="input")
 
+    # भेजो बटन
     if st.button("भेजो") and user_input:
         if not api_key:
             st.error("API की चेक करो!")
@@ -96,14 +102,19 @@ else:
                     st.write(f"**तुम:** {chat['user']}")
                     st.write(f"**एजेंट:** {chat['agent']}")
 
-                # वॉइस आउटपुट बटन
-                if st.button("जवाब सुनाओ (वॉइस में)"):
-                    tts = gTTS(resp_text, lang='hi')
-                    audio_bytes = io.BytesIO()
-                    tts.write_to_fp(audio_bytes)
-                    audio_bytes.seek(0)
-                    b64 = base64.b64encode(audio_bytes.read()).decode()
-                    st.audio(f"data:audio/mp3;base64,{b64}", format="audio/mp3")
+                # वॉइस आउटपुट (fTTS से, autoplay के साथ)
+                audio_placeholder = st.empty()
+                if st.button("जवाब सुनाओ"):
+                    try:
+                        tts = gTTS(resp_text, lang='hi', slow=False)
+                        audio_bytes = io.BytesIO()
+                        tts.write_to_fp(audio_bytes)
+                        audio_bytes.seek(0)
+                        b64 = base64.b64encode(audio_bytes.read()).decode()
+                        audio_html = f'<audio src="data:audio/mp3;base64,{b64}" autoplay controls></audio>'
+                        audio_placeholder.markdown(audio_html, unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"वॉइस जनरेशन एरर: {e}")
 
     # लॉगआउट
     if st.button("लॉगआउट"):
