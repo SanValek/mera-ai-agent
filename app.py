@@ -14,7 +14,7 @@ else:
 
 st.title('मयूर का पहला AI एजेंट')
 
-# सेशन स्टेट इनिशियलाइज
+# सेशन स्टेट
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
@@ -22,7 +22,7 @@ if 'user_email' not in st.session_state:
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# लॉगिन/रजिस्टर पेज
+# लॉगिन/रजिस्टर (पुराना ही)
 if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["लॉगिन", "रजिस्टर"])
     
@@ -55,29 +55,40 @@ else:
     # मॉडल सेटअप
     model = genai.GenerativeModel('gemini-2.5-flash')
 
-    # वॉइस इनपुट (JS से, ऑटो सबमिट के साथ)
-    if st.button("माइक ऑन (वॉइस से बोलो)"):
-        st.components.v1.html("""
+    # वॉइस इनपुट (बेहतर JS, स्टेट अपडेट के साथ)
+    voice_input = st.empty()
+    if st.button("माइक ऑन (वॉइस इनपुट शुरू करो)"):
+        voice_input.components.v1.html("""
         <script>
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'hi-IN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
         recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
-            // इनपुट फील्ड अपडेट
-            const inputField = parent.document.querySelector('input[aria-label="मैसेज लिखो:"]');
-            if (inputField) inputField.value = transcript;
-            // ऑटो सबमिट: भेजो बटन सिमुलेट
-            const submitButton = parent.document.querySelector('button:contains("भेजो")');
-            if (submitButton) submitButton.click();
+            // Streamlit input अपडेट
+            window.parent.document.querySelector('input[aria-label="मैसेज लिखो:"]').value = transcript;
+            // भेजो बटन क्लिक
+            setTimeout(() => {
+                const submitBtn = window.parent.document.querySelector('button[kind="primary"]');
+                if (submitBtn) submitBtn.click();
+            }, 500);
+            alert('बोला गया: ' + transcript);  // डिबग अलर्ट
+        };
+        recognition.onerror = function(event) {
+            alert('माइक एरर: ' + event.error);
+        };
+        recognition.onend = function() {
+            alert('माइक बंद');
         };
         recognition.start();
         </script>
-        <p>बोलो: 'हाय' या 'जोक सुनाओ'—माइक परमिशन दो! ऑटो जवाब आएगा।</p>
+        <p>बोलो: 'हाय' या 'जोक सुनाओ'—ऑटो प्रोसेस होगा!</p>
         """, height=100)
 
     user_input = st.text_input("मैसेज लिखो:", key="input")
 
-    # भेजो बटन
     if st.button("भेजो") and user_input:
         if not api_key:
             st.error("API की चेक करो!")
@@ -94,7 +105,7 @@ else:
                 response = model.generate_content(prompt)
                 resp_text = response.text
                 
-                # चैट हिस्ट्री ऐड
+                # हिस्ट्री ऐड
                 st.session_state.chat_history.append({"user": user_input, "agent": resp_text})
                 
                 # हिस्ट्री दिखाओ
@@ -102,7 +113,7 @@ else:
                     st.write(f"**तुम:** {chat['user']}")
                     st.write(f"**एजेंट:** {chat['agent']}")
 
-                # वॉइस आउटपुट (fTTS से, autoplay के साथ)
+                # वॉइस आउटपुट (बेहतर, autoplay + controls)
                 audio_placeholder = st.empty()
                 if st.button("जवाब सुनाओ"):
                     try:
@@ -111,10 +122,16 @@ else:
                         tts.write_to_fp(audio_bytes)
                         audio_bytes.seek(0)
                         b64 = base64.b64encode(audio_bytes.read()).decode()
-                        audio_html = f'<audio src="data:audio/mp3;base64,{b64}" autoplay controls></audio>'
+                        # HTML audio with autoplay
+                        audio_html = f"""
+                        <audio controls autoplay>
+                            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                            ब्राउजर सपोर्ट नहीं।
+                        </audio>
+                        """
                         audio_placeholder.markdown(audio_html, unsafe_allow_html=True)
                     except Exception as e:
-                        st.error(f"वॉइस जनरेशन एरर: {e}")
+                        st.error(f"साउंड एरर: {e} - ब्राउजर में साउंड ऑन रखो।")
 
     # लॉगआउट
     if st.button("लॉगआउट"):
