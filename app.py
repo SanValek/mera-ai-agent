@@ -9,7 +9,7 @@ if api_key:
 else:
     st.error("API की सेट नहीं है! रेंडर Settings > Environment में GEMINI_API_KEY ऐड करो।")
 
-st.title(मयूर का पहला AI एजेंट')
+st.title('मयूर का पहला AI एजेंट')
 
 # मॉडल सेटअप
 model = genai.GenerativeModel('gemini-2.5-flash')
