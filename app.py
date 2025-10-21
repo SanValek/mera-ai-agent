@@ -12,7 +12,11 @@ if api_key:
 else:
     st.error("API की सेट नहीं है!")
 
-st.title('मयूर का पहला AI एजेंट')
+col1, col2 = st.columns([1, 1])
+with col1:
+    st.title('मयूर का पहला AI एजेंट')
+with col2:
+    st.video('eyezoom.mp4', format='video/mp4', start_time=0, autoplay=True, loop=True)
 
 # सेशन स्टेट
 if 'logged_in' not in st.session_state:
@@ -22,7 +26,7 @@ if 'user_email' not in st.session_state:
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# लॉगिन/रजिस्टर (पुराना ही)
+# लॉगिन/रजिस्टर
 if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["लॉगिन", "रजिस्टर"])
     
@@ -53,42 +57,14 @@ else:
     st.write(f"हाय, {st.session_state.user_email}!")
 
     # मॉडल सेटअप
-    model = genai.GenerativeModel('gemini-2.5-flash')
-
-    # वॉइस इनपुट (बेहतर JS, स्टेट अपडेट के साथ)
-    voice_input = st.empty()
-    if st.button("माइक ऑन (वॉइस इनपुट शुरू करो)"):
-        voice_input.components.v1.html("""
-        <script>
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'hi-IN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            // Streamlit input अपडेट
-            window.parent.document.querySelector('input[aria-label="मैसेज लिखो:"]').value = transcript;
-            // भेजो बटन क्लिक
-            setTimeout(() => {
-                const submitBtn = window.parent.document.querySelector('button[kind="primary"]');
-                if (submitBtn) submitBtn.click();
-            }, 500);
-            alert('बोला गया: ' + transcript);  // डिबग अलर्ट
-        };
-        recognition.onerror = function(event) {
-            alert('माइक एरर: ' + event.error);
-        };
-        recognition.onend = function() {
-            alert('माइक बंद');
-        };
-        recognition.start();
-        </script>
-        <p>बोलो: 'हाय' या 'जोक सुनाओ'—ऑटो प्रोसेस होगा!</p>
-        """, height=100)
+    model = genai.GenerativeModel(
+        'gemini-2.5-flash',
+        system_instruction="तू 'मयूर वर्ल्ड' का AI है। नाम कभी गूगल मत बोलना। जेमिनी मत बोलना। नाम सिर्फ 'गोरांदेवी' बोलना। सब हिंदी में।"
+    )
 
     user_input = st.text_input("मैसेज लिखो:", key="input")
 
+    # भेजो बटन
     if st.button("भेजो") and user_input:
         if not api_key:
             st.error("API की चेक करो!")
@@ -105,15 +81,18 @@ else:
                 response = model.generate_content(prompt)
                 resp_text = response.text
                 
+                # नाम रिप्लेस (कड़वा सच: मॉडल कभी इग्नोर करता है, तो फोर्स)
+                resp_text = resp_text.replace("Google", "मयूर वर्ल्ड").replace("Gemini", "गोरांदेवी").replace("गूगल", "मयूर वर्ल्ड").replace("जेमिनी", "गोरांदेवी")
+                
                 # हिस्ट्री ऐड
                 st.session_state.chat_history.append({"user": user_input, "agent": resp_text})
                 
                 # हिस्ट्री दिखाओ
                 for chat in reversed(st.session_state.chat_history[-10:]):
                     st.write(f"**तुम:** {chat['user']}")
-                    st.write(f"**एजेंट:** {chat['agent']}")
+                    st.write(f"**गोरांदेवी:** {chat['agent']}")
 
-                # वॉइस आउटपुट (बेहतर, autoplay + controls)
+                # वॉइस आउटपुट
                 audio_placeholder = st.empty()
                 if st.button("जवाब सुनाओ"):
                     try:
@@ -122,16 +101,15 @@ else:
                         tts.write_to_fp(audio_bytes)
                         audio_bytes.seek(0)
                         b64 = base64.b64encode(audio_bytes.read()).decode()
-                        # HTML audio with autoplay
                         audio_html = f"""
-                        <audio controls autoplay>
+                        <audio controls autoplay style="width:100%;">
                             <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                            ब्राउजर सपोर्ट नहीं।
+                            ब्राउजर में साउंड सपोर्ट नहीं।
                         </audio>
                         """
                         audio_placeholder.markdown(audio_html, unsafe_allow_html=True)
                     except Exception as e:
-                        st.error(f"साउंड एरर: {e} - ब्राउजर में साउंड ऑन रखो।")
+                        st.error(f"साउंड एरर: {e} - gTTS चेक करो।")
 
     # लॉगआउट
     if st.button("लॉगआउट"):
