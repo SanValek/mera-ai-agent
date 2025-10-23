@@ -12,11 +12,7 @@ if api_key:
 else:
     st.error("API की सेट नहीं है!")
 
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.title('मयूर का पहला AI एजेंट')
-with col2:
-    st.video('eyezoom.mp4', format='video/mp4', start_time=0, autoplay=True, loop=True)
+st.title('मयूर का पहला AI एजेंट')
 
 # सेशन स्टेट
 if 'logged_in' not in st.session_state:
@@ -56,15 +52,31 @@ if not st.session_state.logged_in:
 else:
     st.write(f"हाय, {st.session_state.user_email}!")
 
-    # मॉडल सेटअप
+    if st.button("₹99 में AI ऐप खरीदो"):
+        import requests
+        r = requests.post("http://localhost:8001/pay", json={"amount": 99})
+        if r.status_code == 200:
+            link = r.json()["url"]
+            st.markdown(f'[यहाँ पेमेंट करें]({link})')
+        else:
+            st.error("पेमेंट API एरर")
+
+    if 'payment_success' in st.query_params:
+        st.success("पेमेंट सफल! धन्यवाद, मयूर का AI ऐप खरीद लिया। अब ऐप का आनंद लें।")
+        st.button("होम पर वापस जाएँ", on_click=lambda: st.query_params.clear())
+
+    if st.button("ML चैट शुरू करें"):
+        st.components.v1.iframe("http://localhost:7860", height=600)
+
+    # मॉडल सेटअप (लॉगिन के बाद ही)
     model = genai.GenerativeModel(
         'gemini-2.5-flash',
         system_instruction="तू 'मयूर वर्ल्ड' का AI है। नाम कभी गूगल मत बोलना। जेमिनी मत बोलना। नाम सिर्फ 'गोरांदेवी' बोलना। सब हिंदी में।"
     )
 
+    # जेमिनी चैट (लॉगिन के बाद)
     user_input = st.text_input("मैसेज लिखो:", key="input")
 
-    # भेजो बटन
     if st.button("भेजो") and user_input:
         if not api_key:
             st.error("API की चेक करो!")
@@ -81,7 +93,7 @@ else:
                 response = model.generate_content(prompt)
                 resp_text = response.text
                 
-                # नाम रिप्लेस (कड़वा सच: मॉडल कभी इग्नोर करता है, तो फोर्स)
+                # नाम रिप्लेस
                 resp_text = resp_text.replace("Google", "मयूर वर्ल्ड").replace("Gemini", "गोरांदेवी").replace("गूगल", "मयूर वर्ल्ड").replace("जेमिनी", "गोरांदेवी")
                 
                 # हिस्ट्री ऐड
@@ -117,3 +129,5 @@ else:
         st.session_state.user_email = None
         st.session_state.chat_history = []
         st.rerun()
+
+
