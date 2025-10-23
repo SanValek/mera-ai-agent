@@ -4,4 +4,4 @@ gtts
 fastapi
 uvicorn
 stripe
-pydantic
+pydanticgradio
