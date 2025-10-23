@@ -1,20 +1,20 @@
-
 import gradio as gr
 import google.generativeai as genai
 import os
 
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-1.5-pro')  # Vision के लिए सही मॉडल
+model = genai.GenerativeModel('gemini-2.5-flash')  # अपडेटेड मॉडल, Vision + चैट सपोर्ट
 
 def video_process(video_file):
     if video_file is None:
         return "कोई वीडियो अपलोड नहीं हुआ!"
     try:
+        # वीडियो को Gemini को भेजो (file path से)
         response = model.generate_content([video_file, "इस वीडियो का विस्तृत हिंदी कैप्शन और डिस्क्रिप्शन बनाओ, जिसमें दिखने वाली चीजें, रंग, और गतिविधियाँ शामिल हों।"])
         resp_text = response.text.replace("Google", "मयूर वर्ल्ड").replace("Gemini", "गोरांदेवी")
         return resp_text if resp_text else "कैप्शन जनरेट नहीं हो सका, वीडियो फिर ट्राई करें!"
     except Exception as e:
-        return f"एरर: {e} – API या वीडियो फॉर्मेट चेक करो।"
+        return f"एरर: {e} – API की चेक करो।"
 
 def chat_response(message, history):
     if not message:
@@ -30,7 +30,7 @@ def chat_response(message, history):
         history.append((message, resp_text))
         return history, ""
     except Exception as e:
-        return history, f"एरर: {e} – API या नेट चेक करो।"
+        return history, f"एरर: {e} – API चेक करो।"
 
 with gr.Blocks(title="मयूर का AI ML") as demo:
     gr.Markdown("### वीडियो अपलोड + ML प्रोसेस")
@@ -44,4 +44,3 @@ with gr.Blocks(title="मयूर का AI ML") as demo:
 
 if __name__ == "__main__":
     demo.launch(share=True)
-
