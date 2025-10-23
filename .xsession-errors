@@ -1,0 +1,11 @@
+Xsession: X session started for  at Sun Sep  7 07:42:03 AM UTC 2025
+X Error of failed request:  BadValue (integer parameter out of range for operation)
+  Major opcode of failed request:  109 (X_ChangeHosts)
+  Value in failed request:  0x5
+  Serial number of failed request:  6
+  Current serial number in output stream:  8
+localuser:root being added to access control list
+Xsession: unable to start X session --- no "/root/.xsession" file, no 
+"/root/.Xsession" file, no session managers, no window managers, and no 
+terminal emulators found; aborting.
+Warning: Cannot convert string "vlines2" to type Pixmap

@@ -1,0 +1,4 @@
+#!/bin/sh
+xrdb $HOME/.Xresources
+#xrandr -s 1024×768  # Comment out or remove if causing issues
+startxfce4 &
