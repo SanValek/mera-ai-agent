@@ -24,21 +24,21 @@ def login(user: User):
     raise HTTPException(status_code=400, detail="पासवर्ड गलत")
 
 @app.post("/pay")
-async def create_payment():
+def pay(payment: Payment):
     try:
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
                     'currency': 'inr',
-                    'product_data': {'name': 'Mayur AI App'},
-                    'unit_amount': 9900,  # ₹99 (100 paise = 1 INR)
+                    'product_data': {'name': 'मयूर का AI ऐप'},
+                    'unit_amount': payment.amount * 100,
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='http://localhost:8501/?payment_success=true',  # Streamlit URL
-            cancel_url='http://localhost:8501/?payment_cancel=true',
+            success_url='https://mera-ai-agent.onrender.com/?payment_success=true',  # तेरे Render URL
+            cancel_url='https://mera-ai-agent.onrender.com/?payment_cancel=true',
         )
         return {"url": session.url}
     except Exception as e:
