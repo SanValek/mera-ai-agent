@@ -1,0 +1,5 @@
+.cache/
+code-server*
+__pycache__/
+*.pyc
+.env
