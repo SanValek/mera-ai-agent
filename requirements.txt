@@ -6,3 +6,7 @@ uvicorn
 stripe
 pydantic
 gradio
+diffusers
+transformers
+torch
+accelerate
