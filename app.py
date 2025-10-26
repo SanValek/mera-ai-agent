@@ -54,7 +54,7 @@ else:
 
     if st.button("₹99 में AI ऐप खरीदो"):
         import requests
-        r = requests.post("https://mera-ai-agent-2.onrender.com/pay", json={"amount": 99})
+        r = requests.post("https://mera-ai-agent-3.onrender.com/pay", json={"amount": 99})
         if r.status_code == 200:
             link = r.json()["url"]
             st.markdown(f'[यहाँ पेमेंट करें]({link})')
